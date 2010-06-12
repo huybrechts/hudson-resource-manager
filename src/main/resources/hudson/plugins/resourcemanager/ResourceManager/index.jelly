@@ -1,0 +1,48 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<l:layout permission="${app.ADMINISTER}" title="Resource Manager">
+		<l:side-panel>
+			<l:tasks>
+				<l:task icon="images/24x24/up.gif" href="${rootURL}/"
+					title="${%Back to Dashboard}" />
+			</l:tasks>
+		</l:side-panel>
+		<l:main-panel>
+			<table class="pane sortable">
+				<tr>
+					<td class="pane-header" style="width:10em">${%ID}</td>
+					<td class="pane-header" style="width:10em">${%Label}</td>
+					<td class="pane-header" style="width:2em">${%Enabled}</td>
+					<td class="pane-header" style="width:2em">${%In Use}</td>
+					<td class="pane-header" style="width:2em">${%Actions}</td>
+				</tr>
+				<tbody>
+					<j:forEach var="resource" items="${it.resources}">
+						<tr>
+							<td class="pane">${resource.id}</td>
+							<td class="pane" style="text-align:left">
+								${resource.label}
+            				</td>
+							<td class="pane" style="text-align:left">
+								<f:checkbox checked="${resource.enabled}"/>
+            				</td>
+							<td class="pane" style="text-align:left">
+								<f:checkbox checked="${resource.inUse}"/>
+            				</td>
+							<td>
+								<a href="resource/${resource.id}">Edit</a>
+								<st:nbsp />
+								<a href="resource/${resource.id}/delete">Delete</a>
+							</td>
+						</tr>
+
+					</j:forEach>
+				</tbody>
+
+			</table>
+			
+			<a href="newResource">Add a resource...</a>
+
+		</l:main-panel>
+	</l:layout>
+</j:jelly>

@@ -1,0 +1,41 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<l:layout permission="${app.ADMINISTER}" title="Resource Manager">
+		<l:side-panel>
+			<l:tasks>
+				<l:task icon="images/24x24/up.gif" href="${rootURL}/"
+					title="${%Back to Dashboard}" />
+			</l:tasks>
+		</l:side-panel>
+		<l:main-panel>
+
+			<f:form name="resource" method="post" action="submit">
+
+				<f:entry title="ID">
+					<f:textbox name="id" value="${it.id}" />
+				</f:entry>
+				<f:entry title="Start Command">
+					<f:textarea name="startCommand" value="${it.startCommand}" />
+				</f:entry>
+				<f:entry title="Stop Command">
+					<f:textarea name="stopCommand" value="${it.stopCommand}" />
+				</f:entry>
+				<f:entry title="Node">
+					<f:textbox name="node" value="${it.node}" />
+				</f:entry>
+				<f:entry title="Label">
+					<f:textbox name="label" value="${it.label}" />
+				</f:entry>
+				<f:entry title="Enabled">
+					<f:checkbox name="enabled" checked="${it.enabled}" />
+				</f:entry>
+
+				<f:block>
+					<f:submit value="Save" />
+				</f:block>
+
+
+			</f:form>
+		</l:main-panel>
+	</l:layout>
+</j:jelly>
