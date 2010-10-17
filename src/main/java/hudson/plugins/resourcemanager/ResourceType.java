@@ -10,24 +10,17 @@ import hudson.model.Hudson;
 import hudson.model.Run.RunnerAbortedException;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
 
-public abstract class ResourceType implements Describable<ResourceType> {
+public abstract class ResourceType implements Describable<ResourceType>, Serializable {
 
-	private String id;
-
-	private boolean enabled;
-	private boolean inUse;
-	
-	public ResourceType(String id) {
-		this.id = id;
-	}
-	
-	public Environment setUp(AbstractBuild build, Launcher launcher,
+	public Environment setUp(String id, AbstractBuild build, Launcher launcher,
 			BuildListener listener) throws IOException, InterruptedException {
-		return null;
+		return new Environment(){};
 	}
 
-    public Launcher decorateLauncher(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException, RunnerAbortedException {
+    public Launcher decorateLauncher(String id, AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException, RunnerAbortedException {
         return launcher;
     }
     
@@ -35,29 +28,8 @@ public abstract class ResourceType implements Describable<ResourceType> {
         return Hudson.getInstance().getDescriptorOrDie(getClass());
     }
 
-	public boolean isEnabled() {
-		return enabled;
+	public static List<Descriptor<ResourceType>> all() {
+		return Hudson.getInstance().<ResourceType,Descriptor<ResourceType>>getDescriptorList(ResourceType.class);
 	}
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public boolean isInUse() {
-		return inUse;
-	}
-
-	public void setInUse(boolean inUse) {
-		this.inUse = inUse;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-    
-    
 }

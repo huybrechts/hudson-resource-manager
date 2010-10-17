@@ -14,6 +14,7 @@
 					<td class="pane-header" style="width:10em">${%Label}</td>
 					<td class="pane-header" style="width:2em">${%Enabled}</td>
 					<td class="pane-header" style="width:2em">${%In Use}</td>
+					<td class="pane-header" style="width:2em">${%Used By}</td>
 					<td class="pane-header" style="width:2em">${%Actions}</td>
 				</tr>
 				<tbody>
@@ -24,23 +25,37 @@
 								${resource.label}
             				</td>
 							<td class="pane" style="text-align:left">
-								<f:checkbox checked="${resource.enabled}"/>
-            				</td>
+								<f:checkbox checked="${resource.enabled}" />
+							</td>
 							<td class="pane" style="text-align:left">
-								<f:checkbox checked="${resource.inUse}"/>
-            				</td>
+								<f:checkbox checked="${resource.inUse}" />
+							</td>
+							<td class="pane" style="text-align:left">
+								<j:set var="url" value="${resource.owner.url}" />
+								<j:if test="${url != null}">
+									<a href="${app.rootUrl}${url}">${resource.owner}</a>
+								</j:if>
+							</td>
 							<td>
 								<a href="resource/${resource.id}">Edit</a>
 								<st:nbsp />
 								<a href="resource/${resource.id}/delete">Delete</a>
+								<st:nbsp />
+								<j:choose>
+									<j:when test="${resource.enabled}">
+										<a href="resource/${resource.id}/enable?enable=false">Disable</a>
+									</j:when>
+									<j:otherwise>
+										<a href="resource/${resource.id}/enable?enable=true">Enable</a>
+									</j:otherwise>
+								</j:choose>
 							</td>
 						</tr>
-
 					</j:forEach>
 				</tbody>
 
 			</table>
-			
+
 			<a href="newResource">Add a resource...</a>
 
 		</l:main-panel>

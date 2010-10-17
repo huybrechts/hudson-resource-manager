@@ -10,18 +10,10 @@
 		<l:main-panel>
 
 			<f:form name="resource" method="post" action="submit">
-
+				<j:set var="instance" value="${it}"/>
+				
 				<f:entry title="ID">
 					<f:textbox name="id" value="${it.id}" />
-				</f:entry>
-				<f:entry title="Start Command">
-					<f:textarea name="startCommand" value="${it.startCommand}" />
-				</f:entry>
-				<f:entry title="Stop Command">
-					<f:textarea name="stopCommand" value="${it.stopCommand}" />
-				</f:entry>
-				<f:entry title="Node">
-					<f:textbox name="node" value="${it.node}" />
 				</f:entry>
 				<f:entry title="Label">
 					<f:textbox name="label" value="${it.label}" />
@@ -29,6 +21,12 @@
 				<f:entry title="Enabled">
 					<f:checkbox name="enabled" checked="${it.enabled}" />
 				</f:entry>
+
+				<f:section title="Type">
+					<f:block>
+						<f:hetero-radio field="resourceType" descriptors="${it.resourceTypes}" />
+					</f:block>
+				</f:section>
 
 				<f:block>
 					<f:submit value="Save" />

@@ -1,55 +1,56 @@
 package hudson.plugins.resourcemanager;
 
+import hudson.model.ModelObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
 public class Label {
 
-	private List<Resource> allResources;
-	private List<Resource> availableResources;
-	private Semaphore sem;
+	private List<Resource> resources;
+	private Semaphore semaphore;
 	private final String name;
-
-	private final hudson.model.Resource resource;
-
-	public Label(String name, List<Resource> Resources) {
+	
+	public Label(String name, List<Resource> resources) {
 		this.name = name;
-		this.allResources = Collections.synchronizedList(new ArrayList<Resource>(Resources));
-		this.availableResources = new ArrayList<Resource>(Resources);
-		this.sem = new Semaphore(Resources.size());
-		this.resource = new hudson.model.Resource(null, name, Resources.size());
+		this.resources = new ArrayList<Resource>(resources);
+		this.semaphore = new Semaphore(resources.size());
 	}
 
-	public synchronized void update(List<Resource> Resources) {
-		ArrayList<Resource> newAvailableResources = new ArrayList<Resource>(Resources);
-		Iterator<Resource> it = newAvailableResources.iterator();
-		while (it.hasNext()) {
-			Resource resource = it.next();
-			if (allResources.contains(resource) && !availableResources.contains(resource)) { // so it is in use
-				it.remove();
+	public synchronized void update(List<Resource> newResources) {
+		List<Resource> toRemove = new ArrayList<Resource>(resources);
+		toRemove.removeAll(newResources);
+
+		for (Resource r : toRemove) {
+			if (!r.isInUse()) {
+				// remove this resource from the semaphore if is not in use (else it would already be removed)
+				if (!semaphore.tryAcquire()) {
+					throw new AssertionError(
+							"could not acquire a resource that should be available");
+				}
 			}
 		}
 		
-		allResources = Resources;
-		availableResources = newAvailableResources;
-		sem = new Semaphore(availableResources.size());
+		List<Resource> toAdd = new ArrayList<Resource>(newResources);
+		toAdd.removeAll(resources);
+		semaphore.release(toAdd.size());
+
+		this.resources = newResources;
+
 	}
 
 	public List<Resource> getResources() {
-		return allResources;
+		return new ArrayList<Resource>(resources);
 	}
 
-	public Resource acquire() throws InterruptedException {
-		sem.acquire();
+	public Resource acquire(ModelObject owner) throws InterruptedException {
+		semaphore.acquire();
 		synchronized (this) {
-			Resource result = availableResources.remove(0);
-			if (result.isInUse()) {
-				throw new AssertionError("acquired resource that is in use");
-			}
+			Resource result = getAvailableResources().get(0);
 			result.setInUse(true);
+			result.setOwner(owner);
 			return result;
 		}
 	}
@@ -57,9 +58,9 @@ public class Label {
 	public void release(Resource resource) {
 		synchronized (this) {
 			resource.setInUse(false);
-			if (allResources.contains(resource)) {
-				availableResources.add(resource);
-				sem.release();
+			resource.setOwner(null);
+			if (resources.contains(resource)) {
+				semaphore.release();
 			}
 		}
 	}
@@ -69,19 +70,27 @@ public class Label {
 	}
 
 	public String toString() {
-		if (allResources.size() == 1 && allResources.get(0).getId().equals(name)) {
+		if (resources.size() == 1 && resources.get(0).getId().equals(name)) {
 			return name;
 		} else {
-			return name + " " + allResources;
+			return name + " " + resources;
 		}
 	}
 
 	public hudson.model.Resource getResource() {
-		return resource;
+		if (resources.isEmpty()) {
+			return null;
+		} else {
+			return new hudson.model.Resource(null, name, resources.size());
+		}
 	}
 
-	public List<Resource> getAvailableResources() {
-		return availableResources;
+	public synchronized List<Resource> getAvailableResources() {
+		List<Resource> result = new ArrayList<Resource>();
+		for (Resource r: resources) {
+			if (!r.isInUse()) result.add(r); 
+		}
+		return result;
 	}
 
 }

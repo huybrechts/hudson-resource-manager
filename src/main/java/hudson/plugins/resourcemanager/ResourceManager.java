@@ -3,8 +3,10 @@ package hudson.plugins.resourcemanager;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.Descriptor.FormException;
+import hudson.model.AbstractBuild;
 import hudson.model.ManagementLink;
 import hudson.model.Hudson;
+import hudson.model.PeriodicWork;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -60,8 +64,8 @@ public class ResourceManager extends ManagementLink {
 		Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
 
 		JSONObject form = req.getSubmittedForm();
-		this.resources = req.bindJSONToList(Resource.class, form
-				.get("resources"));
+		this.resources = req.bindJSONToList(Resource.class,
+				form.get("resources"));
 
 		buildLabels();
 
@@ -69,12 +73,14 @@ public class ResourceManager extends ManagementLink {
 
 		rsp.forwardToPreviousPage(req);
 	}
-	
-	public synchronized void doSubmitNewResource(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+
+	public synchronized void doSubmitNewResource(StaplerRequest req,
+			StaplerResponse rsp) throws IOException, ServletException {
 		Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
-		Resource resource = req.bindJSON(Resource.class, req.getSubmittedForm());
+		Resource resource = req
+				.bindJSON(Resource.class, req.getSubmittedForm());
 		resources.add(resource);
-		
+
 		update();
 	}
 
@@ -85,22 +91,22 @@ public class ResourceManager extends ManagementLink {
 	public synchronized List<Resource> getResources() {
 		return Collections.unmodifiableList(resources);
 	}
-	
+
 	public synchronized Resource getResource(String id) {
-		for (Resource resource: resources) {
+		for (Resource resource : resources) {
 			if (resource.getId().equals(id)) {
 				return resource;
 			}
 		}
 		return null;
 	}
-	
-	public synchronized void removeResource(Resource resource) throws IOException {
+
+	public synchronized void removeResource(Resource resource)
+			throws IOException {
 		resources.remove(resource);
 		update();
 	}
 
-	
 	public Resource getNewResource() {
 		return new Resource();
 	}
@@ -115,30 +121,33 @@ public class ResourceManager extends ManagementLink {
 	}
 
 	private synchronized void buildLabels() {
-		Map<String, List<Resource>> m = new HashMap<String, List<Resource>>();
+		Map<String, List<Resource>> map = new HashMap<String, List<Resource>>();
 		for (Resource resource : resources) {
 			if (!resource.isEnabled())
 				continue;
-			if (resource.getLabel() != null) {
-				List<Resource> l = m.get(resource.getLabel());
-				if (l == null) {
-					m.put(resource.getLabel(), l = new ArrayList<Resource>());
+			String label = resource.getLabel();
+			if (label != null) {
+				List<Resource> list = map.get(label);
+				if (list == null) {
+					map.put(label, list = new ArrayList<Resource>());
 				}
-				l.add(resource);
+				list.add(resource);
 			} else {
-				m.put(resource.getId(), Arrays.asList(resource));
+				map.put(resource.getId(), Arrays.asList(resource));
 			}
 		}
 
 		Map<String, Label> newLabels = new HashMap<String, Label>();
-		for (Map.Entry<String, List<Resource>> e : m.entrySet()) {
+		for (Map.Entry<String, List<Resource>> e : map.entrySet()) {
 			Label l = labels.get(e.getKey());
 			if (l != null) {
 				l.update(e.getValue());
+			} else {
+				l = new Label(e.getKey(), e.getValue());
 			}
-			newLabels.put(e.getKey(), new Label(e.getKey(), e.getValue()));
+			newLabels.put(e.getKey(), l);
 		}
-		
+
 		labels = newLabels;
 	}
 
@@ -154,5 +163,35 @@ public class ResourceManager extends ManagementLink {
 	public synchronized void addResource(Resource resource) throws IOException {
 		resources.add(resource);
 		update();
+	}
+
+	public synchronized HttpResponse doCleanup() {
+		for (Label l : getLabels().values()) {
+			for (Resource r : l.getResources()) {
+				synchronized (r) {
+					if (r.isInUse() && r.getOwner() instanceof AbstractBuild) {
+						AbstractBuild build = ((AbstractBuild) r.getOwner());
+						if (!build.isBuilding() && !build.hasntStartedYet()) {
+							l.release(r);
+						}
+					}
+				}
+			}
+		}
+		return HttpResponses.forwardToPreviousPage();
+	}
+
+	@Extension
+	public static class ResourceManagerCleanup extends PeriodicWork {
+		@Override
+		public long getRecurrencePeriod() {
+			return 60000;
+		}
+
+		@Override
+		protected void doRun() throws Exception {
+			getInstance().doCleanup();
+		}
+
 	}
 }

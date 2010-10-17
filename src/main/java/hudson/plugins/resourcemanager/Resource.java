@@ -1,17 +1,23 @@
 package hudson.plugins.resourcemanager;
 
 import hudson.Util;
-import hudson.model.Hudson;
+import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
+import hudson.model.ModelObject;
+import hudson.model.Hudson;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 
 import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.HttpResponses;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -21,25 +27,21 @@ public class Resource implements Serializable {
 
 	private String id;
 	private String label;
-	private String startCommand;
-	private String stopCommand;
-	private String node;
 	private boolean enabled;
+	private ResourceType resourceType;
 
-	private boolean inUse;
+	private transient boolean inUse;
+	private transient ModelObject owner;
 	
 	public Resource() {};
 
 	@DataBoundConstructor
-	public Resource(String id, String label, String startCommand,
-			String stopCommand, String node, boolean enabled) {
+	public Resource(String id, String label, boolean enabled, ResourceType resourceType) {
 		super();
-		this.id = id;
-		this.label = label;
-		this.startCommand = Util.fixEmptyAndTrim(startCommand);
-		this.stopCommand = Util.fixEmptyAndTrim(stopCommand);
-		this.node = Util.fixEmptyAndTrim(node);
+		this.label = Util.fixEmptyAndTrim(label);
+		this.id = Util.fixEmptyAndTrim(id);
 		this.enabled = enabled;
+		this.resourceType = resourceType;
 	}
 
 	public String getId() {
@@ -48,18 +50,6 @@ public class Resource implements Serializable {
 
 	public String getLabel() {
 		return label;
-	}
-
-	public String getStartCommand() {
-		return startCommand;
-	}
-
-	public String getStopCommand() {
-		return stopCommand;
-	}
-
-	public String getNode() {
-		return node;
 	}
 
 	public boolean isEnabled() {
@@ -72,23 +62,13 @@ public class Resource implements Serializable {
 	}
 	
 	public void setId(String id) {
-		this.id = id;
+		this.id = Util.fixEmptyAndTrim(id);
+		
 	}
 
 	public void setLabel(String label) {
-		this.label = label;
-	}
-
-	public void setStartCommand(String startCommand) {
-		this.startCommand = startCommand;
-	}
-
-	public void setStopCommand(String stopCommand) {
-		this.stopCommand = stopCommand;
-	}
-
-	public void setNode(String node) {
-		this.node = node;
+		this.label = Util.fixEmptyAndTrim(label);
+		
 	}
 
 	public void setEnabled(boolean enabled) {
@@ -102,6 +82,10 @@ public class Resource implements Serializable {
 	public void setInUse(boolean inUse) {
 		this.inUse = inUse;
 	}
+	
+	public ResourceType getResourceType() {
+		return resourceType;
+	}
 
 	public void doSubmit(StaplerRequest req, StaplerResponse rsp)
 			throws ServletException, IOException, FormException {
@@ -109,28 +93,19 @@ public class Resource implements Serializable {
 		
 		boolean isNew = id == null;
 		
-		Resource r = req.bindJSON(Resource.class, req.getSubmittedForm());
-		if (Util.fixEmptyAndTrim(r.id) == null) {
+		JSONObject form = req.getSubmittedForm();
+		
+		if (Util.fixEmptyAndTrim(form.getString("id")) == null) {
 			throw new IOException("id is required");
 		}
-		String node = Util.fixEmptyAndTrim(r.node);
-		if (node != null && Hudson.getInstance().getNode(node) == null) {
-			throw new IOException("unknown node: " + node);
-		}
 		
-		req.bindJSON(this, req.getSubmittedForm());
-		this.label = Util.fixEmptyAndTrim(this.label);
-		this.id = Util.fixEmptyAndTrim(this.id);
-		this.startCommand = Util.fixEmptyAndTrim(this.startCommand);
-		this.stopCommand = Util.fixEmptyAndTrim(this.stopCommand);
-		this.node = Util.fixEmptyAndTrim(this.node);
+		req.bindJSON(this, form);
 		
 		if (isNew) {
 			ResourceManager.getInstance().addResource(this);
 		} else {
 			ResourceManager.getInstance().update();
 		}
-		
 		
 		rsp.sendRedirect(Hudson.getInstance().getRootUrl() + "resourceManager");
 	}
@@ -143,4 +118,28 @@ public class Resource implements Serializable {
 			rsp.forward(this, "confirmDelete", req);
 		}
 	}
+	
+	public List<Descriptor<ResourceType>> getResourceTypes() {
+		return ResourceType.all();
+	}
+
+	public void setResourceType(ResourceType resourceType) {
+		this.resourceType = resourceType;
+	}
+	
+	public HttpResponse doEnable(@QueryParameter boolean enable) throws IOException {
+		boolean modified = this.enabled != enable;
+		this.enabled = enable;
+		if (modified) ResourceManager.getInstance().update();
+		return HttpResponses.forwardToPreviousPage(); 
+	}
+
+	public void setOwner(ModelObject owner) {
+		this.owner = owner;
+	}
+	
+	public ModelObject getOwner() {
+		return owner;
+	}
+	
 }
