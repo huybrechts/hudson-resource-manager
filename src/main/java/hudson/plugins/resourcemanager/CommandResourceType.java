@@ -44,6 +44,10 @@ public class CommandResourceType extends ResourceType {
 					throw new IOException("Cannot start resource " + this
 							+ " since node " + nodeId + " is offline");
 				}
+				while (node.toComputer().isOffline()) {
+					listener.getLogger().println("Waiting for slave " + nodeId + " to come online");
+					Thread.sleep(10000);
+				}
 
 				success = execute(node, startCommand, id, listener);
 
