@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
@@ -29,9 +30,10 @@ import org.kohsuke.stapler.StaplerResponse;
 @Extension
 public class ResourceManager extends ManagementLink {
 
+    private static final Logger LOGGER = Logger.getLogger(ResourceManager.class.getName());
+
 	private List<Resource> resources = new ArrayList<Resource>();
-	private transient Map<String, Label> labels = Collections
-			.synchronizedMap(new HashMap<String, Label>());
+	private transient Map<String, Label> labels = Collections.synchronizedMap(new HashMap<String, Label>());
 
 	public ResourceManager() {
 		try {
@@ -64,8 +66,7 @@ public class ResourceManager extends ManagementLink {
 		Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
 
 		JSONObject form = req.getSubmittedForm();
-		this.resources = req.bindJSONToList(Resource.class,
-				form.get("resources"));
+		this.resources = req.bindJSONToList(Resource.class, form.get("resources"));
 
 		buildLabels();
 
@@ -112,8 +113,7 @@ public class ResourceManager extends ManagementLink {
 	}
 
 	private File getConfigFile() {
-		return new File(Hudson.getInstance().getRootDir(), getClass().getName()
-				+ ".xml");
+		return new File(Hudson.getInstance().getRootDir(), getClass().getName()+ ".xml");
 	}
 
 	public void save() throws IOException {
@@ -172,6 +172,7 @@ public class ResourceManager extends ManagementLink {
 					if (r.isInUse() && r.getOwner() instanceof AbstractBuild) {
 						AbstractBuild build = ((AbstractBuild) r.getOwner());
 						if (!build.isBuilding() && !build.hasntStartedYet()) {
+                            LOGGER.warning("Force releasing " + r + ", since build " + build.getDisplayName() + " has completed");
 							l.release(r);
 						}
 					}
