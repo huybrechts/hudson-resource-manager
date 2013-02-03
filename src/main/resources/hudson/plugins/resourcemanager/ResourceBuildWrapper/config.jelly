@@ -8,4 +8,7 @@
 			</j:forEach>
 		</select>
 	</f:entry>
+    <f:entry title="Asynchronous Setup" field="async">
+        <f:checkbox/>
+    </f:entry>
 </j:jelly>

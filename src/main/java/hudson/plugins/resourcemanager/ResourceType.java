@@ -15,15 +15,26 @@ import java.util.List;
 
 public abstract class ResourceType implements Describable<ResourceType>, Serializable {
 
-	public Environment setUp(String id, AbstractBuild build, Launcher launcher,
-			BuildListener listener) throws IOException, InterruptedException {
-		return new Environment(){};
-	}
+    public abstract String getNodeId();
 
-    public Launcher decorateLauncher(String id, AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException, RunnerAbortedException {
-        return launcher;
+	public boolean setUp(String id, AbstractBuild build, Launcher launcher,
+			BuildListener listener) throws IOException, InterruptedException {
+        return true;
     }
-    
+
+    public boolean tearDown(String id, AbstractBuild build, Launcher launcher,
+                                  BuildListener listener) throws IOException, InterruptedException {
+        return true;
+    }
+
+    public boolean isSetupRequired() {
+        return true;
+    }
+
+    public boolean isTearDownRequired() {
+        return true;
+    }
+
     public Descriptor<ResourceType> getDescriptor() {
         return Hudson.getInstance().getDescriptorOrDie(getClass());
     }

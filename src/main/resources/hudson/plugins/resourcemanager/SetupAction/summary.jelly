@@ -1,0 +1,15 @@
+<!--
+  Displays the execution log
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson">
+
+    <t:summary icon="orange-square.png">
+        Resource ${it.resourceId}
+        <j:forEach var="stage" items="${it.stages.entrySet()}">
+            <div>
+                <a href="${it.searchUrl}/${stage.key.name()}/"><img src="${imagesURL}/16x16/${stage.value.buildStatusUrl}"/>${stage.key}</a>
+            </div>
+        </j:forEach>
+    </t:summary>
+
+</j:jelly>

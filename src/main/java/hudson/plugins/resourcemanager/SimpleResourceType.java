@@ -15,8 +15,23 @@ public class SimpleResourceType extends ResourceType {
 
 	@DataBoundConstructor
 	public SimpleResourceType() {}
-	
-	@Extension
+
+    @Override
+    public String getNodeId() {
+        return null;
+    }
+
+    @Override
+    public boolean isSetupRequired() {
+        return false;
+    }
+
+    @Override
+    public boolean isTearDownRequired() {
+        return false;
+    }
+
+    @Extension
 	public static class DescriptorImpl extends Descriptor<ResourceType> {
 
 		@Override
