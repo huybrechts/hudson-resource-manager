@@ -5,6 +5,7 @@ import hudson.model.ModelObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 public class Label {
@@ -48,7 +49,8 @@ public class Label {
 	public Resource acquire(ModelObject owner) throws InterruptedException {
 		semaphore.acquire();
 		synchronized (this) {
-			Resource result = getAvailableResources().get(0);
+			List<Resource> availableResources = getAvailableResources();
+			Resource result = availableResources.get(new Random().nextInt(availableResources.size()));
 			result.setInUse(true);
 			result.setOwner(owner);
 			return result;

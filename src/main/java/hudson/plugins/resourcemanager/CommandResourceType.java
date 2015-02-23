@@ -94,8 +94,8 @@ public class CommandResourceType extends ResourceType {
                 if (script != null)
                     script.delete();
             } catch (IOException e) {
-                Util.displayIOException(e, listener);
-                e.printStackTrace(listener.fatalError(Messages.CommandInterpreter_UnableToDelete(script)));
+//                Util.displayIOException(e, listener);
+//                e.printStackTrace(listener.fatalError(Messages.CommandInterpreter_UnableToDelete(script)));
             }
         }
 

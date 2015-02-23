@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.424.1</version>
+        <version>1.580.1</version>
     </parent>
 
     <artifactId>resource-manager</artifactId>
@@ -32,22 +32,10 @@
             <version>${jenkins.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>ui-samples-plugin</artifactId>
-            <version>${jenkins.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>maven-plugin</artifactId>
-            <version>${jenkins.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 	
 	<properties>
-		<jenkins.version>1.424.1</jenkins.version>
+		<jenkins.version>1.580.1</jenkins.version>
 	</properties>
 
 </project>
