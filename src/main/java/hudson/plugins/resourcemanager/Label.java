@@ -1,6 +1,9 @@
 package hudson.plugins.resourcemanager;
 
+import hudson.model.Api;
 import hudson.model.ModelObject;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,6 +11,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
+@ExportedBean
 public class Label {
 
 	private List<Resource> resources;
@@ -42,6 +46,7 @@ public class Label {
 
 	}
 
+	@Exported
 	public List<Resource> getResources() {
 		return new ArrayList<Resource>(resources);
 	}
@@ -95,4 +100,7 @@ public class Label {
 		return result;
 	}
 
+	public Api getApi() {
+		return new Api(this);
+	}
 }

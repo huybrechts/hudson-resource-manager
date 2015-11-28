@@ -151,6 +151,8 @@ public class SetupAction extends AbstractQueueTask implements ModelObject, Actio
     public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
         env.put("HUDSON_RESOURCE_ID", resourceId);
         env.put("JENKINS_RESOURCE_ID", resourceId);
-        env.put("JENKINS_RESOURCE_READY_URL", Hudson.getInstance().getRootUrl() + getUrl() + "/setUp/wait");
+        if (ResourceManager.getInstance().getResource(resourceId).getResourceType().isSetupRequired()) {
+            env.put("JENKINS_RESOURCE_READY_URL", Hudson.getInstance().getRootUrl() + getUrl() + "/setUp/wait");
+        }
     }
 }

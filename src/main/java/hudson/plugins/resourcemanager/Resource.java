@@ -1,6 +1,7 @@
 package hudson.plugins.resourcemanager;
 
 import hudson.Util;
+import hudson.model.Api;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.ModelObject;
@@ -20,17 +21,28 @@ import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
+@ExportedBean
 public class Resource implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	@Exported
 	private String id;
+
+	@Exported
 	private String label;
+
+	@Exported
 	private boolean enabled;
+
 	private ResourceType resourceType;
 
+	@Exported
 	private transient boolean inUse;
+
 	private transient ModelObject owner;
 	
 	public Resource() {};
@@ -140,6 +152,10 @@ public class Resource implements Serializable {
 	
 	public ModelObject getOwner() {
 		return owner;
+	}
+
+	public Api getApi() {
+		return new Api(this);
 	}
 	
 }
