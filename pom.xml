@@ -10,14 +10,14 @@
     <groupId>com.agfa.jenkins.plugins</groupId>
     <artifactId>resource-manager</artifactId>
     <packaging>hpi</packaging>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
     <name>Resource Manager</name>
     <url>http://wikihealthcare.agfa.net/display/JEN/Resource+Manager</url>
 
 	<scm>
 		<connection>scm:git:git@github.com:huybrechts/hudson-resource-manager.git</connection>
 		<developerConnection>scm:git:git@github.com:huybrechts/hudson-resource-manager.git</developerConnection>
-    <tag>resource-manager-1.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
     <properties>
