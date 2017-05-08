@@ -1,14 +1,7 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
 	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-	<f:entry title="Resource Label">
-		<select class="setting-input" name="label">
-			<j:forEach var="i" items="${descriptor.labels}">
-				<f:option selected="${i.name==instance.label}" value="${i.name}">
-					${i}</f:option>
-			</j:forEach>
-		</select>
+	<f:entry title="${%Labels}" field="label">
+		<f:textbox autoCompleteDelimChar=" " value="${it.label}"/>
 	</f:entry>
-    <f:entry title="Asynchronous Setup" field="async">
-        <f:checkbox/>
-    </f:entry>
 </j:jelly>

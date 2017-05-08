@@ -5,12 +5,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
-import hudson.model.Environment;
-import hudson.model.Executor;
-import hudson.model.Node;
+import hudson.model.*;
 import hudson.tasks.Messages;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -31,8 +26,8 @@ public class CommandResourceType extends ResourceType {
     }
 
     @Override
-    public boolean setUp(final String id, AbstractBuild build, Launcher launcher,
-                             BuildListener listener) throws IOException, InterruptedException {
+    public boolean setUp(final String id, Run<?,?> build, Launcher launcher,
+                         BuildListener listener) throws IOException, InterruptedException {
         final Node node = Executor.currentExecutor().getOwner().getNode();
 
         return execute(node, startCommand, id, listener);
@@ -40,7 +35,7 @@ public class CommandResourceType extends ResourceType {
     }
 
     @Override
-    public boolean tearDown(final String id, AbstractBuild build, Launcher launcher,
+    public boolean tearDown(final String id, Run<?,?> build, Launcher launcher,
                          BuildListener listener) throws IOException, InterruptedException {
         final Node node = Executor.currentExecutor().getOwner().getNode();
 

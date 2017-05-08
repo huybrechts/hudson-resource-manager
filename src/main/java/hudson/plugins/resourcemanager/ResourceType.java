@@ -1,12 +1,7 @@
 package hudson.plugins.resourcemanager;
 
 import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Environment;
-import hudson.model.AbstractBuild;
-import hudson.model.Hudson;
+import hudson.model.*;
 import hudson.model.Run.RunnerAbortedException;
 
 import java.io.IOException;
@@ -17,12 +12,12 @@ public abstract class ResourceType implements Describable<ResourceType>, Seriali
 
     public abstract String getNodeId();
 
-	public boolean setUp(String id, AbstractBuild build, Launcher launcher,
-			BuildListener listener) throws IOException, InterruptedException {
+	public boolean setUp(String id, Run<?,?> build, Launcher launcher,
+                         BuildListener listener) throws IOException, InterruptedException {
         return true;
     }
 
-    public boolean tearDown(String id, AbstractBuild build, Launcher launcher,
+    public boolean tearDown(String id, Run<?,?> build, Launcher launcher,
                                   BuildListener listener) throws IOException, InterruptedException {
         return true;
     }

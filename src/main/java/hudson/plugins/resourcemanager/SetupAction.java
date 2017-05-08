@@ -1,50 +1,31 @@
 package hudson.plugins.resourcemanager;
 
 import hudson.EnvVars;
-import hudson.model.AbstractBuild;
-import hudson.model.Action;
-import hudson.model.BuildableItemWithBuildWrappers;
-import hudson.model.EnvironmentContributingAction;
-import hudson.model.Hudson;
+import hudson.model.*;
 import hudson.model.Label;
-import hudson.model.ModelObject;
-import hudson.model.Node;
-import hudson.model.Queue;
-import hudson.model.ResourceList;
 import hudson.model.queue.AbstractQueueTask;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.security.Permission;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class SetupAction extends AbstractQueueTask implements ModelObject, Action, EnvironmentContributingAction {
 
-    private final AbstractBuild<?, ?> build;
+    private final Run<?, ?> build;
     private final String resourceId;
+    private final String label;
 
-    private transient Stage nextStage;
+    private SetupRun setUp;
+    private SetupRun.TeardownRun tearDown;
 
-    private final Map<Stage,SetupRun> stages = new TreeMap<Stage,SetupRun>();
-
-    public SetupAction(AbstractBuild build, String resourceId) {
+    public SetupAction(Run build, String resourceId, String label) {
         this.build = build;
         this.resourceId = resourceId;
+        this.label = label;
     }
 
-    public Map<Stage, SetupRun> getStages() {
-        return stages;
-    }
-
-    public Stage getNextStage() {
-        return nextStage;
-    }
-
-    public void setNextStage(Stage nextStage) {
-        this.nextStage = nextStage;
+    public String getLabel() {
+        return label;
     }
 
     public String getIconFileName() {
@@ -56,34 +37,31 @@ public class SetupAction extends AbstractQueueTask implements ModelObject, Actio
     }
 
     public String getUrlName() {
-        return "resource";
+        return "resource-" + resourceId;
     }
 
     public synchronized Queue.Executable createExecutable() throws IOException {
-        SetupRun run =  new SetupRun(this, nextStage);
-        stages.put(nextStage, run);
-        return run;
-
+        if (setUp == null) {
+            return setUp = new SetupRun(this);
+        } else {
+            return tearDown = new SetupRun.TeardownRun(this);
+        }
     }
 
-    public SetupRun getStage(Stage stage) {
-        return stages.get(stage);
+    public SetupRun getSetUp() {
+        return setUp;
     }
 
-    public SetupRun getDynamic(String token, StaplerRequest req, StaplerResponse rsp) {
-        return getStage(Stage.valueOf(token));
+    public SetupRun.TeardownRun getTearDown() {
+        return tearDown;
     }
 
-    public ResourceBuildWrapper getWrapper() {
-        return ((BuildableItemWithBuildWrappers) build.getProject()).getBuildWrappersList().get(ResourceBuildWrapper.class);
-    }
-
-    public AbstractBuild<?, ?> getBuild() {
+    public Run<?, ?> getBuild() {
         return build;
     }
 
     public String getSearchUrl() {
-        return "resource";
+        return getUrlName();
     }
 
     /////////////////////////////////
@@ -129,7 +107,7 @@ public class SetupAction extends AbstractQueueTask implements ModelObject, Actio
     }
 
     public String getUrl() {
-        return build.getUrl() + "resource/";
+        return build.getUrl() + getUrlName();
     }
 
     public boolean isConcurrentBuild() {
@@ -149,10 +127,13 @@ public class SetupAction extends AbstractQueueTask implements ModelObject, Actio
     }
 
     public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
-        env.put("HUDSON_RESOURCE_ID", resourceId);
-        env.put("JENKINS_RESOURCE_ID", resourceId);
-        if (ResourceManager.getInstance().getResource(resourceId).getResourceType().isSetupRequired()) {
-            env.put("JENKINS_RESOURCE_READY_URL", Hudson.getInstance().getRootUrl() + getUrl() + "/setUp/wait");
+        int index = build.getActions(SetupAction.class).indexOf(this);
+        env.put("JENKINS_RESOURCE_ID_" + label, resourceId);
+
+        if (index == 0) {
+            env.put("HUDSON_RESOURCE_ID", resourceId);
+            env.put("JENKINS_RESOURCE_ID", resourceId);
         }
     }
+
 }

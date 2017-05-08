@@ -1,14 +1,7 @@
 package hudson.plugins.resourcemanager;
 
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BallColor;
-import hudson.model.BuildListener;
-import hudson.model.Executor;
-import hudson.model.Node;
-import hudson.model.Queue;
-import hudson.model.Result;
-import hudson.model.StreamBuildListener;
+import hudson.model.*;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
@@ -31,24 +24,21 @@ public class SetupRun implements Queue.Executable {
 
     private static final Logger LOGGER = Logger.getLogger(SetupRun.class.getName());
 
-    private SetupAction parent;
-    private Stage stage;
+    SetupAction parent;
     private Result result;
     private long timestamp = System.currentTimeMillis();
 
-    public SetupRun(SetupAction parent, Stage stage) {
+    public SetupRun(SetupAction parent) {
         this.parent = parent;
-        this.stage = stage;
+    }
+
+    private String getName() {
+        return "setUp";
     }
 
     public SetupAction getParent() {
         return parent;
     }
-
-    public Stage getStage() {
-        return stage;
-    }
-
 
     public void run() {
         StreamBuildListener listener = null;
@@ -81,10 +71,10 @@ public class SetupRun implements Queue.Executable {
     }
 
     public File getLogFile() {
-        return new File(getBuild().getRootDir(), "resourceManager-" + stage.name() + ".log");
+        return new File(getBuild().getRootDir(), "resourceManager-" + getName() + ".log");
     }
 
-    private AbstractBuild<?, ?> getBuild() {
+    private Run<?, ?> getBuild() {
         return getParent().getBuild();
     }
 
@@ -126,7 +116,7 @@ public class SetupRun implements Queue.Executable {
     }
 
     public String getNumber() {
-        return stage.name();
+        return getName();
     }
 
     public String getUrl() {
@@ -140,25 +130,15 @@ public class SetupRun implements Queue.Executable {
 
     private boolean run(BuildListener listener) throws InterruptedException, IOException {
 
-        Resource resource = ResourceManager.getInstance().getResource(parent.getResourceId());
-
         Node node = Executor.currentExecutor().getOwner().getNode();
         final Launcher launcher = node.createLauncher(listener);
 
-        listener.getLogger().println("[resource-manager] starting " + stage.toString());
+        listener.getLogger().println("[resource-manager] starting " + getName());
 
-        boolean success = false;
-
-        switch (stage) {
-            case setUp:
-                success = resource.getResourceType().setUp(resource.getId(), parent.getBuild(), launcher, listener);
-                break;
-            case tearDown:
-                success = resource.getResourceType().tearDown(resource.getId(), parent.getBuild(), launcher, listener);
-        }
+        boolean success = doRun(listener, launcher);
 
         if (!success) {
-            listener.getLogger().println("[resource-manager] " + stage + " failed!");
+            listener.getLogger().println("[resource-manager] " + getName() + " failed!");
             return false;
         } else {
             return true;
@@ -166,11 +146,29 @@ public class SetupRun implements Queue.Executable {
 
     }
 
-    private transient CountDownLatch latch = new CountDownLatch(1);
-
-    public void waitForCompletion() throws InterruptedException {
-        latch.await();
+    boolean doRun(BuildListener listener, Launcher launcher) throws IOException, InterruptedException {
+        Resource resource = ResourceManager.getInstance().getResource(parent.getResourceId());
+        boolean success;
+        success = resource.getResourceType().setUp(resource.getId(), parent.getBuild(), launcher, listener);
+        return success;
     }
+
+    static class TeardownRun extends SetupRun {
+        public TeardownRun(SetupAction parent) {
+            super(parent);
+        }
+
+        boolean doRun(BuildListener listener, Launcher launcher) throws IOException, InterruptedException {
+            Resource resource = ResourceManager.getInstance().getResource(parent.getResourceId());
+            return resource.getResourceType().tearDown(resource.getId(), parent.getBuild(), launcher, listener);
+        }
+
+        private String getName() {
+            return "tearDown";
+        }
+    }
+
+    private transient CountDownLatch latch = new CountDownLatch(1);
 
     public boolean waitForCompletion(int seconds) throws InterruptedException {
         return latch.await(seconds, TimeUnit.SECONDS);

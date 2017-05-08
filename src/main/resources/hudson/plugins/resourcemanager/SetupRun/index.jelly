@@ -1,6 +1,7 @@
 <!--
   Displays the execution log
 -->
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
     <l:layout title="${it.parent.fullDisplayName}" norefresh="true">
         <l:header />
